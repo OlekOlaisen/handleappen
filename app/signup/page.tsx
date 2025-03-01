@@ -112,7 +112,7 @@ export default function SignUp() {
     <div className="container flex h-screen w-screen flex-col items-center justify-center">
       <h1 className="mb-2 text-4xl font-bold tracking-tight text-primary">Handleappen</h1>
       <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground mb-4">
-        <span>A hobby project by Ole Kristian Heian Olaisen</span>
+        <span>Et hobbyprosjekt av Ole Kristian Heian Olaisen</span>
         <a
           href="https://www.linkedin.com/in/okho/"
           target="_blank"

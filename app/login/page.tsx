@@ -66,9 +66,11 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-md space-y-2">
-        <h1 className="text-4xl font-bold text-center text-primary">Handleappen</h1>
+        <h1 className="text-4xl font-bold text-center text-primary">
+          Handleappen
+        </h1>
         <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground mb-4">
-          <span>A hobby project by Ole Kristian Heian Olaisen</span>
+          <span>Et hobbyprosjekt av Ole Kristian Heian Olaisen</span>
           <a
             href="https://www.linkedin.com/in/okho/"
             target="_blank"
@@ -81,7 +83,9 @@ export default function LoginPage() {
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold">Logg inn</CardTitle>
-            <CardDescription>Skriv inn dine detaljer for å logge inn på kontoen din</CardDescription>
+            <CardDescription>
+              Skriv inn dine detaljer for å logge inn på kontoen din
+            </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
@@ -104,7 +108,10 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Passord</Label>
-                  <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                  <Link
+                    href="/forgot-password"
+                    className="text-sm text-primary hover:underline"
+                  >
                     Glemt passord?
                   </Link>
                 </div>
@@ -119,8 +126,14 @@ export default function LoginPage() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
-              <Button type="submit" className="w-full text-white" disabled={isLoading}>
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              <Button
+                type="submit"
+                className="w-full text-white"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
                 Logg inn
               </Button>
               <div className="relative">
@@ -128,7 +141,9 @@ export default function LoginPage() {
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">ELLER FORTSETT MED</span>
+                  <span className="bg-background px-2 text-muted-foreground">
+                    ELLER FORTSETT MED
+                  </span>
                 </div>
               </div>
               <Button
@@ -173,6 +188,6 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
 
