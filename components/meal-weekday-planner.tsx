@@ -186,7 +186,7 @@ export default function MealWeekdayPlanner() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <ScrollArea className="h-[200px]">
+                <ScrollArea className="h-full">
                   <div className="px-3 pb-3">
                     {dayMeals.length > 0 ? (
                       <div className="space-y-2">
@@ -226,7 +226,7 @@ export default function MealWeekdayPlanner() {
                         ))}
                       </div>
                     ) : (
-                      <div className="flex h-[180px] items-center justify-center">
+                      <div className="flex h-full items-center justify-center">
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button variant="ghost" className="h-auto w-full py-8 hover:bg-muted">
@@ -256,7 +256,7 @@ export default function MealWeekdayPlanner() {
                                       }
                                     }}
                                   >
-                                    <div className="flex flex-col items-start">
+                                    <div className="flex flex-col items-center">
                                       <span className="font-medium">{meal.name}</span>
                                       <span className="text-xs text-muted-foreground">
                                         {meal.items.length} {meal.items.length === 1 ? "produkt" : "produkter"}
@@ -272,7 +272,7 @@ export default function MealWeekdayPlanner() {
                     )}
                   </div>
                 </ScrollArea>
-                {dayMeals.length > 0 && (
+                {/* {dayMeals.length > 0 && (
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button variant="ghost" size="sm" className="w-full rounded-none border-t">
@@ -315,7 +315,7 @@ export default function MealWeekdayPlanner() {
                       </ScrollArea>
                     </DialogContent>
                   </Dialog>
-                )}
+                )} */}
               </CardContent>
             </Card>
           )

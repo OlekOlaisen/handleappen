@@ -76,7 +76,7 @@ export function AddToWeekDialog({ mealId, mealName }: AddToWeekDialogProps) {
                 className="justify-start h-auto py-2"
                 onClick={() => handleAddToDay(day)}
               >
-                <div className="flex flex-col items-start">
+                <div className="flex flex-col items-start justify-start">
                   <span className="font-medium">{WEEKDAY_NAMES[day]}</span>
                   <span className="text-xs text-muted-foreground">
                     {dayMealIds.length} {dayMealIds.length === 1 ? "måltid" : "måltider"} planlagt

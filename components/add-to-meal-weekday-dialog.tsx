@@ -72,14 +72,15 @@ export function AddToMealWeekdayDialog({ mealId, mealName }: AddToMealWeekdayDia
                 className="justify-start h-auto py-2"
                 onClick={() => handleAddToDay(weekday)}
               >
-                <div className="flex flex-col items-start">
+                <div className="flex flex-col items-center ">
                   <span className="font-medium">{WEEKDAY_NAMES[weekday]}</span>
                   <span className="text-xs text-muted-foreground">
-                    {dayMealIds.length} {dayMealIds.length === 1 ? "måltid" : "måltider"} planlagt
+                    {dayMealIds.length}{" "}
+                    {dayMealIds.length === 1 ? "måltid" : "måltider"} planlagt
                   </span>
                 </div>
               </Button>
-            )
+            );
           })}
         </div>
       </DialogContent>
