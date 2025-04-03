@@ -89,7 +89,7 @@ export default function Header() {
               <SheetContent className="sm:max-w-md transition-transform duration-300">
                 <SheetHeader>
                   <SheetTitle>Handlekurv</SheetTitle>
-                  <SheetDescription>Dine valgte produkter</SheetDescription>
+                  
                 </SheetHeader>
                 <CartContents />
               </SheetContent>

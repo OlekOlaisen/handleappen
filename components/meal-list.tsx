@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Edit2, Trash2, ChevronRight, UtensilsCrossed } from "lucide-react";
+import {
+  Edit2,
+  Trash2,
+  ChevronRight,
+  UtensilsCrossed,
+  Store,
+  AlertCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -27,6 +34,26 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import MealDialog from "@/components/meal-dialog";
 import Link from "next/link";
 import { AddToMealWeekdayDialog } from "@/components/add-to-meal-weekday-dialog";
+
+// Define types for our meal data
+interface BestStore {
+  name: string;
+  total: number;
+  productCount: number;
+}
+
+interface MealWithTotals {
+  id: string;
+  name: string;
+  items: Array<{
+    product: any;
+    quantity: number;
+  }>;
+  total: number;
+  itemCount: number;
+  bestStore: BestStore | null;
+  hasOrphanedProducts: boolean;
+}
 
 export default function MealList() {
   const { meals, deleteMeal, renameMeal } = useMeal();
@@ -57,20 +84,94 @@ export default function MealList() {
     }
   };
 
-  // Calculate total price for each meal
-  const mealsWithTotals = meals.map((meal) => {
+  // Calculate total price for each meal and find the best store
+  const mealsWithTotals = meals.map((meal): MealWithTotals => {
+    // Track prices by store and which products are available at each store
+    const storeData: Record<
+      string,
+      {
+        total: number;
+        productCount: number;
+        availableProducts: Set<string | number>; // Allow both string and number IDs
+      }
+    > = {};
+
+    // Track all products in the meal
+    const allProductIds = new Set(meal.items.map((item) => item.product.id));
+    const totalProductCount = allProductIds.size;
+
+    // Calculate total price and track by store
     const total = meal.items.reduce((sum, item) => {
       // Find the cheapest store option for this product
-      const cheapestPrice = item.product.storeOptions
-        ? Math.min(...item.product.storeOptions.map((opt) => opt.current_price))
-        : item.product.current_price;
-      return sum + cheapestPrice * item.quantity;
+      if (item.product.storeOptions && item.product.storeOptions.length > 0) {
+        // Track prices by store
+        item.product.storeOptions.forEach((option) => {
+          const storeName = option.store.name;
+          if (!storeData[storeName]) {
+            storeData[storeName] = {
+              total: 0,
+              productCount: 0,
+              availableProducts: new Set(),
+            };
+          }
+
+          if (!storeData[storeName].availableProducts.has(item.product.id)) {
+            storeData[storeName].productCount++;
+            storeData[storeName].availableProducts.add(item.product.id);
+          }
+
+          storeData[storeName].total += option.current_price * item.quantity;
+        });
+
+        const cheapestPrice = Math.min(
+          ...item.product.storeOptions.map((opt) => opt.current_price)
+        );
+        return sum + cheapestPrice * item.quantity;
+      } else {
+        // If no store options, use the product's current price
+        return sum + item.product.current_price * item.quantity;
+      }
     }, 0);
+
+    // Find the best store (one that has the most products and lowest total)
+    let bestStore: BestStore | null = null;
+    const itemCount = meal.items.reduce((sum, item) => sum + item.quantity, 0);
+
+    Object.entries(storeData).forEach(
+      ([storeName, data]: [
+        string,
+        {
+          total: number;
+          productCount: number;
+          availableProducts: Set<string | number>;
+        }
+      ]) => {
+        if (
+          !bestStore ||
+          data.productCount > bestStore.productCount ||
+          (data.productCount === bestStore.productCount &&
+            data.total < bestStore.total)
+        ) {
+          bestStore = {
+            name: storeName,
+            total: data.total,
+            productCount: data.productCount,
+          };
+        }
+      }
+    );
+
+ 
+    const hasOrphanedProducts = bestStore
+      ? bestStore.productCount < totalProductCount
+      : false;
 
     return {
       ...meal,
       total,
-      itemCount: meal.items.reduce((sum, item) => sum + item.quantity, 0),
+      itemCount,
+      bestStore,
+      hasOrphanedProducts,
     };
   });
 
@@ -151,6 +252,27 @@ export default function MealList() {
                     {meal.itemCount === 1 ? "produkt" : "produkter"} · Estimert
                     pris: {formatPrice(meal.total)} kr
                   </CardDescription>
+
+                  {meal.bestStore && (
+                    <div className="mt-1 space-y-1">
+                      <div className="flex items-center gap-1 text-xs text-[#BE185D]">
+                        <Store className="h-3 w-3" />
+                        <span>
+                          Billigst hos {meal.bestStore.name}:{" "}
+                          {formatPrice(meal.bestStore.total)} kr
+                        </span>
+                      </div>
+
+                      {meal.hasOrphanedProducts && (
+                        <div className="flex items-center gap-1 text-xs text-yellow-600">
+                          <AlertCircle className="h-3 w-3" />
+                          <span>
+                            Noen ingredienser må kjøpes fra andre butikker
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardHeader>
                 <CardContent className="pb-3">
                   <div className="flex gap-2">

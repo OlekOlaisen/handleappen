@@ -16,7 +16,6 @@ export default function CartContents() {
     orphanedItems,
     removeItem,
     updateQuantity,
-    totalByStore,
     clearCart,
     isLoading,
     isSyncing,
@@ -40,48 +39,125 @@ export default function CartContents() {
     );
   }
 
-  // Sort stores by total price (lowest first)
-  const sortedStores = Object.entries(totalByStore).sort(
-    ([, a], [, b]) => a - b
-  );
+  // Get all unique product IDs
+  const allItems = [...items, ...orphanedItems];
+  const allProductIds = new Set(allItems.map((item) => item.ean));
+  const totalProductCount = allProductIds.size;
 
-  const bestStore =
-    sortedStores.length > 0
-      ? {
-          store: sortedStores[0][0],
-          total: sortedStores[0][1],
-        }
-      : { store: "", total: 0 };
-
-  // Helper function to get store details (logo and name) from items.
-  const getStoreDetails = (storeCode: string) => {
-    for (const item of items) {
-      const found = item.storeOptions.find(
-        (opt) => opt.store.code === storeCode
-      );
-      if (found) {
-        return found.store;
-      }
+  // Track prices by store and which products are available at each store
+  const storeData: Record<
+    string,
+    {
+      total: number;
+      productCount: number;
+      availableProducts: Set<string>;
+      logo?: string;
+      name?: string;
+      hasAllProducts: boolean;
     }
-    return null;
-  };
+  > = {};
+
+  // Calculate total price for each store
+  allItems.forEach((item) => {
+    item.storeOptions.forEach((option) => {
+      const storeCode = option.store.code;
+
+      // Initialize store data if not already done
+      if (!storeData[storeCode]) {
+        storeData[storeCode] = {
+          total: 0,
+          productCount: 0,
+          availableProducts: new Set(),
+          hasAllProducts: false,
+          name: option.store.name,
+          logo: option.store.logo,
+        };
+      }
+
+      // Add product to store's available products if not already added
+      if (!storeData[storeCode].availableProducts.has(item.ean)) {
+        storeData[storeCode].availableProducts.add(item.ean);
+        storeData[storeCode].productCount++;
+      }
+
+      // Add price to store's total
+      storeData[storeCode].total += option.current_price * item.quantity;
+    });
+  });
+
+  // Mark stores that have all products
+  Object.keys(storeData).forEach((storeCode) => {
+    storeData[storeCode].hasAllProducts =
+      storeData[storeCode].productCount === totalProductCount;
+  });
+
+  // Convert to array and sort by product count (descending) first, then by price (ascending)
+  const sortedStores = Object.entries(storeData)
+    .map(([storeCode, data]) => ({
+      storeCode,
+      total: data.total,
+      productCount: data.productCount,
+      hasAllProducts: data.hasAllProducts,
+      name: data.name || storeCode,
+      logo: data.logo,
+    }))
+    .sort((a, b) => {
+      // First sort by product count (descending)
+      if (b.productCount !== a.productCount) {
+        return b.productCount - a.productCount;
+      }
+      // Then sort by price (ascending)
+      return a.total - b.total;
+    });
+
+  // The best store is the first one after sorting by product count and price
+  const bestStore = sortedStores.length > 0 ? sortedStores[0] : null;
+
+  // Calculate the cheapest possible total price (across all stores)
+  const cheapestTotalPrice = allItems.reduce((sum, item) => {
+    // Find the cheapest store option for this product
+    const cheapestPrice = item.storeOptions
+      ? Math.min(...item.storeOptions.map((opt) => opt.current_price))
+      : item.current_price;
+    return sum + cheapestPrice * item.quantity;
+  }, 0);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-10rem)]">
-      {bestStore.store && (
+    <div className="flex flex-col h-[calc(100vh-5rem)]">
+      {bestStore && (
         <Alert className="mb-4">
           <Store className="h-4 w-4" />
           <AlertTitle>Anbefalt butikk</AlertTitle>
           <AlertDescription className="mt-2 space-y-2">
-            <p>
-              Den billigste butikken for ditt kjøp er{" "}
+            <p>Den billigste butikken for ditt kjøp er</p>
+            <div className="flex items-center gap-2">
+              {bestStore.logo && (
+                <div className="relative w-6 h-6 overflow-hidden rounded">
+                  <Image
+                    src={bestStore.logo || "/placeholder.svg"}
+                    alt={bestStore.name}
+                    width={24}
+                    height={24}
+                    className="object-contain"
+                  />
+                </div>
+              )}
               <span className="font-semibold text-[#BE185D]">
-                {bestStore.store}
+                {bestStore.name}
               </span>
-            </p>
+              <span>
+                ({bestStore.productCount}/{totalProductCount} produkter)
+              </span>
+            </div>
             <p className="font-semibold">
               Total pris: {formatPrice(bestStore.total)} kr
             </p>
+            {!bestStore.hasAllProducts && (
+              <p className="text-yellow-600 text-sm flex items-center gap-1">
+                <AlertCircle className="h-4 w-4" />
+                <span>Noen produkter må kjøpes fra andre butikker</span>
+              </p>
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -91,12 +167,12 @@ export default function CartContents() {
           {items.length > 0 && (
             <div className="space-y-4">
               <h3 className="font-medium text-sm">
-                Handlekurv - {bestStore.store}
+                Handlekurv - {bestStore?.name || ""}
               </h3>
               <div className="space-y-4">
                 {items.map((item) => {
                   const bestStoreOption = item.storeOptions.find(
-                    (opt) => opt.store.name === bestStore.store
+                    (opt) => opt.store.code === bestStore?.storeCode
                   );
                   const price =
                     bestStoreOption?.current_price || item.current_price;
@@ -303,52 +379,53 @@ export default function CartContents() {
       </ScrollArea>
 
       {(items.length > 0 || orphanedItems.length > 0) && (
-        <div className="space-y-4 pt-4 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="pt-4 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex flex-col">
           {items.length > 0 && (
-            <div className="space-y-2">
+            <div className="mb-4">
               <div className="text-sm font-medium mb-2">
                 Sammenligning av butikker:
               </div>
-              {sortedStores.map(([storeCode, total]) => {
-                const storeDetails = getStoreDetails(storeCode);
-                return (
+              <div className="max-h-[250px] overflow-y-auto pr-1 space-y-2">
+                {sortedStores.slice(0, 4).map((store) => (
                   <div
-                    key={storeCode}
-                    className="flex items-center justify-between text-sm"
+                    key={store.storeCode}
+                    className="flex items-center justify-between text-sm mb-2"
                   >
                     <div className="flex items-center gap-2">
-                      {storeDetails?.logo && (
-                        <Image
-                          src={storeDetails.logo}
-                          alt={storeDetails.name}
-                          width={24}
-                          height={24}
-                          className="rounded"
-                        />
+                      {store.logo && (
+                        <div className="relative w-6 h-6 overflow-hidden rounded">
+                          <Image
+                            src={store.logo || "/placeholder.svg"}
+                            alt={store.name}
+                            width={24}
+                            height={24}
+                            className="object-contain"
+                          />
+                        </div>
                       )}
                       <span
                         className={
-                          storeCode === bestStore.store
+                          store === bestStore
                             ? "font-medium text-[#BE185D]"
                             : ""
                         }
                       >
-                        {storeDetails ? storeDetails.name : storeCode}{" "}
-                        {storeCode === bestStore.store && "(Billigst)"}
+                        {store.name} {store === bestStore && "(Billigst)"}
+                      </span>
+                      <span className="text-yellow-600 text-xs">
+                        ({store.productCount}/{totalProductCount})
                       </span>
                     </div>
                     <span
                       className={
-                        storeCode === bestStore.store
-                          ? "font-medium text-[#BE185D]"
-                          : ""
+                        store === bestStore ? "font-medium text-[#BE185D]" : ""
                       }
                     >
-                      {formatPrice(total)} kr
+                      {formatPrice(store.total)} kr
                     </span>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
           )}
 
@@ -359,14 +436,16 @@ export default function CartContents() {
             </div>
           )}
 
-          <Button
-            variant="outline"
-            className="w-full text-destructive hover:bg-destructive/10"
-            onClick={clearCart}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Tøm handlekurv
-          </Button>
+          <div className="mt-auto pt-4">
+            <Button
+              variant="outline"
+              className="w-full text-destructive hover:bg-destructive/10"
+              onClick={clearCart}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Tøm handlekurv
+            </Button>
+          </div>
         </div>
       )}
     </div>
