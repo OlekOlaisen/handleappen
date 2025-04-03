@@ -272,7 +272,7 @@ export default function MealWeekdayPlanner() {
                     )}
                   </div>
                 </ScrollArea>
-                {/* {dayMeals.length > 0 && (
+                 {dayMeals.length > 0 && (
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button variant="ghost" size="sm" className="w-full rounded-none border-t">
@@ -315,7 +315,7 @@ export default function MealWeekdayPlanner() {
                       </ScrollArea>
                     </DialogContent>
                   </Dialog>
-                )} */}
+                )} 
               </CardContent>
             </Card>
           )

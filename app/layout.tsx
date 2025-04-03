@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     userScalable: false,
     viewportFit: "cover",
   },
-    generator: 'v0.dev'
+    
 }
 
 export default function RootLayout({

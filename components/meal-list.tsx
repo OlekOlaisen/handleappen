@@ -1,12 +1,18 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Edit2, Trash2, ChevronRight, UtensilsCrossed } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useMeal } from "@/hooks/use-meal"
-import { Input } from "@/components/ui/input"
-import { formatPrice } from "@/lib/utils"
+import { useState } from "react";
+import { Edit2, Trash2, ChevronRight, UtensilsCrossed } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useMeal } from "@/hooks/use-meal";
+import { Input } from "@/components/ui/input";
+import { formatPrice } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,40 +22,40 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import MealDialog from "@/components/meal-dialog"
-import Link from "next/link"
-import { AddToMealWeekdayDialog } from "@/components/add-to-meal-weekday-dialog"
+} from "@/components/ui/alert-dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import MealDialog from "@/components/meal-dialog";
+import Link from "next/link";
+import { AddToMealWeekdayDialog } from "@/components/add-to-meal-weekday-dialog";
 
 export default function MealList() {
-  const { meals, deleteMeal, renameMeal } = useMeal()
-  const [editingMealId, setEditingMealId] = useState<string | null>(null)
-  const [editingMealName, setEditingMealName] = useState("")
-  const [mealToDelete, setMealToDelete] = useState<string | null>(null)
+  const { meals, deleteMeal, renameMeal } = useMeal();
+  const [editingMealId, setEditingMealId] = useState<string | null>(null);
+  const [editingMealName, setEditingMealName] = useState("");
+  const [mealToDelete, setMealToDelete] = useState<string | null>(null);
 
   const handleStartEditing = (id: string, currentName: string) => {
-    setEditingMealId(id)
-    setEditingMealName(currentName)
-  }
+    setEditingMealId(id);
+    setEditingMealName(currentName);
+  };
 
   const handleSaveEdit = () => {
     if (editingMealId && editingMealName.trim()) {
-      renameMeal(editingMealId, editingMealName.trim())
-      setEditingMealId(null)
+      renameMeal(editingMealId, editingMealName.trim());
+      setEditingMealId(null);
     }
-  }
+  };
 
   const handleCancelEdit = () => {
-    setEditingMealId(null)
-  }
+    setEditingMealId(null);
+  };
 
   const handleDeleteMeal = () => {
     if (mealToDelete) {
-      deleteMeal(mealToDelete)
-      setMealToDelete(null)
+      deleteMeal(mealToDelete);
+      setMealToDelete(null);
     }
-  }
+  };
 
   // Calculate total price for each meal
   const mealsWithTotals = meals.map((meal) => {
@@ -57,16 +63,16 @@ export default function MealList() {
       // Find the cheapest store option for this product
       const cheapestPrice = item.product.storeOptions
         ? Math.min(...item.product.storeOptions.map((opt) => opt.current_price))
-        : item.product.current_price
-      return sum + cheapestPrice * item.quantity
-    }, 0)
+        : item.product.current_price;
+      return sum + cheapestPrice * item.quantity;
+    }, 0);
 
     return {
       ...meal,
       total,
       itemCount: meal.items.reduce((sum, item) => sum + item.quantity, 0),
-    }
-  })
+    };
+  });
 
   return (
     <div className="space-y-4">
@@ -89,7 +95,7 @@ export default function MealList() {
         </Card>
       ) : (
         <ScrollArea className="h-[calc(100vh-12rem)]">
-          <div className="grid gap-4 pb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
             {mealsWithTotals.map((meal) => (
               <Card key={meal.id} className="overflow-hidden">
                 <CardHeader className="pb-3">
@@ -99,15 +105,19 @@ export default function MealList() {
                         value={editingMealName}
                         onChange={(e) => setEditingMealName(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter") handleSaveEdit()
-                          if (e.key === "Escape") handleCancelEdit()
+                          if (e.key === "Enter") handleSaveEdit();
+                          if (e.key === "Escape") handleCancelEdit();
                         }}
                         autoFocus
                       />
                       <Button size="sm" onClick={handleSaveEdit}>
                         Lagre
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleCancelEdit}
+                      >
                         Avbryt
                       </Button>
                     </div>
@@ -137,20 +147,27 @@ export default function MealList() {
                     </div>
                   )}
                   <CardDescription>
-                    {meal.itemCount} {meal.itemCount === 1 ? "produkt" : "produkter"} · Estimert pris:{" "}
-                    {formatPrice(meal.total)} kr
+                    {meal.itemCount}{" "}
+                    {meal.itemCount === 1 ? "produkt" : "produkter"} · Estimert
+                    pris: {formatPrice(meal.total)} kr
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pb-3">
                   <div className="flex gap-2">
                     <Link href={`/meals/${meal.id}`} className="flex-1">
-                      <Button variant="outline" className="w-full justify-between">
+                      <Button
+                        variant="outline"
+                        className="w-full justify-between"
+                      >
                         Se detaljer
                         <ChevronRight className="h-4 w-4" />
                       </Button>
                     </Link>
                     <div className="flex-1">
-                      <AddToMealWeekdayDialog mealId={meal.id} mealName={meal.name} />
+                      <AddToMealWeekdayDialog
+                        mealId={meal.id}
+                        mealName={meal.name}
+                      />
                     </div>
                   </div>
                 </CardContent>
@@ -160,23 +177,29 @@ export default function MealList() {
         </ScrollArea>
       )}
 
-      <AlertDialog open={mealToDelete !== null} onOpenChange={(open) => !open && setMealToDelete(null)}>
+      <AlertDialog
+        open={mealToDelete !== null}
+        onOpenChange={(open) => !open && setMealToDelete(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Er du sikker?</AlertDialogTitle>
             <AlertDialogDescription>
-              Dette vil slette måltiden og alle produktene i den. Denne handlingen kan ikke angres.
+              Dette vil slette måltiden og alle produktene i den. Denne
+              handlingen kan ikke angres.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteMeal} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction
+              onClick={handleDeleteMeal}
+              className="bg-destructive text-destructive-foreground"
+            >
               Slett
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }
-

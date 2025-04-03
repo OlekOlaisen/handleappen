@@ -1,47 +1,58 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Button } from "./ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog"
+import { useEffect, useState } from "react";
+import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 
 export function PWAPrompt() {
-  const [showPrompt, setShowPrompt] = useState(false)
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
     const handler = (e: Event) => {
-      // Prevent Chrome 67 and earlier from automatically showing the prompt
-      e.preventDefault()
-      // Stash the event so it can be triggered later
-      setDeferredPrompt(e)
-      setShowPrompt(true)
-    }
+      // Only show prompt on mobile devices
+      const isMobile =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent
+        );
+      if (!isMobile) return;
 
-    window.addEventListener("beforeinstallprompt", handler)
+      e.preventDefault(); // Prevent auto-showing on older Chrome versions
+      setDeferredPrompt(e);
+      setShowPrompt(true);
+    };
+
+    window.addEventListener("beforeinstallprompt", handler);
 
     return () => {
-      window.removeEventListener("beforeinstallprompt", handler)
-    }
-  }, [])
+      window.removeEventListener("beforeinstallprompt", handler);
+    };
+  }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return
+    if (!deferredPrompt) return;
 
     // Show the install prompt
-    deferredPrompt.prompt()
+    deferredPrompt.prompt();
 
     // Wait for the user to respond to the prompt
-    const { outcome } = await deferredPrompt.userChoice
+    const { outcome } = await deferredPrompt.userChoice;
 
-    // We no longer need the prompt. Clear it up
-    setDeferredPrompt(null)
-    setShowPrompt(false)
+    // Clear the prompt
+    setDeferredPrompt(null);
+    setShowPrompt(false);
 
-    // Optionally, send analytics event with outcome of user choice
-    console.log(`User response to the install prompt: ${outcome}`)
-  }
+    // Optionally, log the user response
+    console.log(`User response to the install prompt: ${outcome}`);
+  };
 
-  if (!showPrompt) return null
+  if (!showPrompt) return null;
 
   return (
     <Dialog open={showPrompt} onOpenChange={setShowPrompt}>
@@ -49,7 +60,8 @@ export function PWAPrompt() {
         <DialogHeader>
           <DialogTitle>Installer Handleappen</DialogTitle>
           <DialogDescription>
-            Installer appen på enheten din for raskere tilgang og en bedre brukeropplevelse
+            Installer appen på enheten din for raskere tilgang og en bedre
+            brukeropplevelse
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-end gap-4 mt-4">
@@ -60,6 +72,5 @@ export function PWAPrompt() {
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-
