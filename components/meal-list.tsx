@@ -16,6 +16,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { useMeal } from "@/hooks/use-meal";
 import { Input } from "@/components/ui/input";
@@ -137,15 +138,14 @@ export default function MealList() {
     let bestStore: BestStore | null = null;
     const itemCount = meal.items.reduce((sum, item) => sum + item.quantity, 0);
 
-    Object.entries(storeData).forEach(
-      ([storeName, data]: [
-        string,
-        {
-          total: number;
-          productCount: number;
-          availableProducts: Set<string | number>;
-        }
-      ]) => {
+    // Fix for TypeScript error: Explicitly type the entries and ensure we're only processing valid entries
+    Object.entries(storeData).forEach(([storeName, data]) => {
+      // Ensure data is properly typed
+      if (
+        data &&
+        typeof data.productCount === "number" &&
+        typeof data.total === "number"
+      ) {
         if (
           !bestStore ||
           data.productCount > bestStore.productCount ||
@@ -159,9 +159,9 @@ export default function MealList() {
           };
         }
       }
-    );
+    });
 
- 
+    // Determine if all products are available at the best store
     const hasOrphanedProducts = bestStore
       ? bestStore.productCount < totalProductCount
       : false;
@@ -198,7 +198,7 @@ export default function MealList() {
         <ScrollArea className="h-[calc(100vh-12rem)]">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
             {mealsWithTotals.map((meal) => (
-              <Card key={meal.id} className="overflow-hidden">
+              <Card key={meal.id} className="overflow-hidden flex flex-col">
                 <CardHeader className="pb-3">
                   {editingMealId === meal.id ? (
                     <div className="flex gap-2">
@@ -274,8 +274,12 @@ export default function MealList() {
                     </div>
                   )}
                 </CardHeader>
-                <CardContent className="pb-3">
-                  <div className="flex gap-2">
+
+                {/* Use flex-grow to push the footer to the bottom */}
+                <div className="flex-grow"></div>
+
+                <CardFooter className="pt-2 pb-3">
+                  <div className="flex gap-2 w-full">
                     <Link href={`/meals/${meal.id}`} className="flex-1">
                       <Button
                         variant="outline"
@@ -292,7 +296,7 @@ export default function MealList() {
                       />
                     </div>
                   </div>
-                </CardContent>
+                </CardFooter>
               </Card>
             ))}
           </div>

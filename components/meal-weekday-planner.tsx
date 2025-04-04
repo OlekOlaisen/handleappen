@@ -303,7 +303,7 @@ export default function MealWeekdayPlanner() {
                                 }
                               }}
                             >
-                              <div className="flex flex-col items-start">
+                              <div className="flex flex-col items-center">
                                 <span className="font-medium">{meal.name}</span>
                                 <span className="text-xs text-muted-foreground">
                                   {meal.items.length} {meal.items.length === 1 ? "produkt" : "produkter"}
