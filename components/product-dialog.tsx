@@ -20,12 +20,14 @@ interface ProductDialogProps {
   product: Product & { storeOptions?: Product[] };
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  selectedStore?: string;
 }
 
 export default function ProductDialog({
   product,
   open,
   onOpenChange,
+  selectedStore,
 }: ProductDialogProps) {
   const { addItem } = useCart();
 
@@ -33,12 +35,30 @@ export default function ProductDialog({
   const sortedStoreOptions = [...(product.storeOptions || [product])].sort(
     (a, b) => a.current_price - b.current_price
   );
-  const bestPrice =
+
+  // Find the price to display (either selected store price or best price)
+  let displayPrice =
     sortedStoreOptions[0]?.current_price || product.current_price;
+  let displayUnitPrice =
+    sortedStoreOptions[0]?.current_unit_price || product.current_unit_price;
+
+  if (
+    selectedStore &&
+    product.storeOptions &&
+    product.storeOptions.length > 0
+  ) {
+    const storeOption = product.storeOptions.find(
+      (option) => option.store && option.store.name === selectedStore
+    );
+    if (storeOption) {
+      displayPrice = storeOption.current_price;
+      displayUnitPrice = storeOption.current_unit_price;
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-[90vw] h-[90vh] flex flex-col overflow-hidden rounded-lg">
+      <DialogContent className="max-w-6xl w-[95vw] h-[90vh] flex flex-col overflow-hidden rounded-lg">
         <DialogHeader>
           <DialogTitle className="text-2xl">{product.name}</DialogTitle>
         </DialogHeader>
@@ -69,40 +89,62 @@ export default function ProductDialog({
                 </h3>
                 <div className="rounded-md border">
                   <div className="divide-y">
-                    {sortedStoreOptions.map((option, index) => (
-                      <div
-                        key={option.store.code}
-                        className="flex items-center justify-between p-3"
-                      >
-                        <div className="flex items-center gap-2">
+                    {sortedStoreOptions.map((option, index) => {
+                      const isSelectedStore =
+                        selectedStore && option.store.name === selectedStore;
+                      const isCheapest = index === 0;
+                      const isHighlighted =
+                        isSelectedStore || (!selectedStore && isCheapest);
+
+                      return (
+                        <div
+                          key={option.store.code}
+                          className="flex items-center justify-between p-3"
+                        >
+                          <div className="flex items-center gap-2">
+                            {option.store.logo && (
+                              <div className="relative w-6 h-6 overflow-hidden rounded">
+                                <Image
+                                  src={option.store.logo || "/placeholder.svg"}
+                                  alt={option.store.name}
+                                  width={24}
+                                  height={24}
+                                  className="object-contain"
+                                />
+                              </div>
+                            )}
+                            <span
+                              className={
+                                isHighlighted
+                                  ? "font-medium text-[#BE185D]"
+                                  : ""
+                              }
+                            >
+                              {option.store.name}
+                              {isSelectedStore && " (Valgt butikk)"}
+                              {!selectedStore && isCheapest && " (Billigst)"}
+                            </span>
+                            {option.url && (
+                              <a
+                                href={option.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-muted-foreground hover:text-foreground"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                            )}
+                          </div>
                           <span
                             className={
-                              index === 0 ? "font-medium text-[#BE185D]" : ""
+                              isHighlighted ? "font-medium text-[#BE185D]" : ""
                             }
                           >
-                            {option.store.name}
-                            {index === 0 && " (Billigst)"}
+                            {formatPrice(option.current_price)} kr
                           </span>
-                          {option.url && (
-                            <a
-                              href={option.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-muted-foreground hover:text-foreground"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
-                          )}
                         </div>
-                        <span
-                          className={
-                            index === 0 ? "font-medium text-[#BE185D]" : ""
-                          }
-                        >
-                          {formatPrice(option.current_price)} kr
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -233,12 +275,11 @@ export default function ProductDialog({
         <div className="pt-6 space-y-2 border-t mt-auto">
           <div className="flex justify-between items-baseline">
             <span className="text-2xl font-bold">
-              {formatPrice(bestPrice)} kr
+              {formatPrice(displayPrice)} kr
             </span>
-            {product.current_unit_price && (
+            {displayUnitPrice && (
               <span className="text-sm text-muted-foreground">
-                ({formatPrice(product.current_unit_price)} kr/
-                {product.weight_unit})
+                ({formatPrice(displayUnitPrice)} kr/{product.weight_unit})
               </span>
             )}
           </div>

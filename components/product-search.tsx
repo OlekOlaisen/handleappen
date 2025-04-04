@@ -105,24 +105,46 @@ export default function ProductSearch() {
     searchProducts();
   }, [searchTerm, sortBy]);
 
-  // Filter products by store
+  // Filter products by store and prepare products with store-specific prices
   function filterProductsByStore(productsToFilter: Product[], store: string) {
     if (!store || store === "all") {
       setFilteredProducts(productsToFilter);
       return;
     }
 
-    const filtered = productsToFilter.filter((product) => {
-      // Check if the product has storeOptions and if the selected store is in those options
-      if (product.storeOptions && product.storeOptions.length > 0) {
-        return product.storeOptions.some(
-          (option) => option.store && option.store.name === store
-        );
-      }
+    // Filter products available at the selected store and update their prices
+    const filtered = productsToFilter
+      .filter((product) => {
+        // Check if the product has storeOptions and if the selected store is in those options
+        if (product.storeOptions && product.storeOptions.length > 0) {
+          return product.storeOptions.some(
+            (option) => option.store && option.store.name === store
+          );
+        }
 
-      // If no storeOptions, check the product's own store
-      return product.store && product.store.name === store;
-    });
+        // If no storeOptions, check the product's own store
+        return product.store && product.store.name === store;
+      })
+      .map((product) => {
+        // Create a copy of the product to avoid mutating the original
+        const productCopy = { ...product };
+
+        // If the product has store options, find the price for the selected store
+        if (product.storeOptions && product.storeOptions.length > 0) {
+          const storeOption = product.storeOptions.find(
+            (option) => option.store && option.store.name === store
+          );
+
+          if (storeOption) {
+            // Update the product's price to the selected store's price
+            productCopy.current_price = storeOption.current_price;
+            productCopy.current_unit_price = storeOption.current_unit_price;
+            productCopy.store = storeOption.store;
+          }
+        }
+
+        return productCopy;
+      });
 
     setFilteredProducts(filtered);
   }
@@ -205,7 +227,13 @@ export default function ProductSearch() {
         filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredProducts.map((product: Product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                selectedStore={
+                  selectedStore !== "all" ? selectedStore : undefined
+                }
+              />
             ))}
           </div>
         ) : (
