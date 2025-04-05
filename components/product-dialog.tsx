@@ -58,7 +58,7 @@ export default function ProductDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-[95vw] h-[90vh] flex flex-col overflow-hidden rounded-lg">
+      <DialogContent className="max-w-4xl w-[90vw] md:w-[95vw] h-[90vh] flex flex-col overflow-hidden rounded-lg">
         <DialogHeader>
           <DialogTitle className="text-2xl">{product.name}</DialogTitle>
         </DialogHeader>
