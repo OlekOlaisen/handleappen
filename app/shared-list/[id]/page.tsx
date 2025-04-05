@@ -147,25 +147,67 @@ export default function SharedListPage() {
   // Download shared list as a text file
   const downloadShoppingList = () => {
     if (!shoppingList) return;
-    let content = `${shoppingList.name}\n`;
-    content += `Generert: ${new Date(
+
+    // Title and dates
+    let content = `Min handleliste\n`;
+    content += `Opprettet ${new Date(
       shoppingList.created_at
-    ).toLocaleDateString()}\n\n`;
-    shoppingList.items.forEach((item) => {
-      const cheapestStore = [...item.stores].sort(
-        (a, b) => a.price - b.price
-      )[0];
-      const itemTotal = cheapestStore.price * item.quantity;
-      content += `${item.quantity}x ${item.name} - ${formatPrice(
-        itemTotal
-      )} kr\n`;
-    });
-    content += `\nTotal: ${formatPrice(calculateTotal())} kr\n`;
+    ).toLocaleDateString()} · Utløper om ${daysLeft} ${
+      daysLeft === 1 ? "dag" : "dager"
+    }\n\n`;
+
+    // Recommended store section
+    if (recommendedStore) {
+      content += `Anbefalt butikk: ${recommendedStore.name}\n`;
+      content += `Total pris: ${formatPrice(recommendedStore.total)} kr\n`;
+      content += `(${recommendedStore.productCount}/${shoppingList.items.length} produkter)\n\n`;
+    }
+
+    // Items in recommended store
+    if (itemsInRecommendedStore.length > 0) {
+      content += `Handlekurv - ${recommendedStoreName}:\n`;
+      itemsInRecommendedStore.forEach((item) => {
+        const bestStoreOption =
+          item.stores.find((store) => store.name === recommendedStoreName) ||
+          [...item.stores].sort((a, b) => a.price - b.price)[0];
+        content += `${item.name} - ${formatPrice(bestStoreOption.price)} kr x ${
+          item.quantity
+        }\n`;
+      });
+      content += "\n";
+    }
+
+    // Orphaned items
+    if (orphanedItems.length > 0) {
+      content += `Produkter som må kjøpes separat:\n`;
+      orphanedItems.forEach((item) => {
+        const bestOption = [...item.stores].sort(
+          (a, b) => a.price - b.price
+        )[0];
+        content += `${item.name} - Billigst hos ${
+          bestOption.name
+        }: ${formatPrice(bestOption.price)} kr x ${item.quantity}\n`;
+      });
+      content += "\n";
+    }
+
+    // Store comparison
+    if (storeComparisonData.length > 0) {
+      content += `Sammenligning av butikker:\n`;
+      storeComparisonData.forEach((store) => {
+        content += `${store.name}${
+          store.name === recommendedStore?.name ? " (Billigst)" : ""
+        } (${store.productCount}/${shoppingList.items.length}) - ${formatPrice(
+          store.total
+        )} kr\n`;
+      });
+    }
+
     const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `shopping-list-${listId}.txt`;
+    link.download = `handleliste-${listId}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -218,11 +260,36 @@ export default function SharedListPage() {
         {/* Recommended store alert */}
         {recommendedStore && (
           <Alert className="mb-4">
-            <Store className="h-4 w-4" />
-            <AlertTitle>Anbefalt butikk</AlertTitle>
-            <AlertDescription className="mt-2 space-y-2">
-              <p>Den billigste butikken for ditt kjøp er</p>
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              {recommendedStore.logo && (
+                <div className="relative w-6 h-6 overflow-hidden rounded">
+                  <Image
+                    src={recommendedStore.logo || "/placeholder.svg"}
+                    alt={recommendedStore.name}
+                    width={24}
+                    height={24}
+                    className="object-contain"
+                  />
+                </div>
+              )}
+              <AlertTitle>Anbefalt butikk</AlertTitle>
+            </div>
+            <AlertDescription>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="bg-primary/10 p-2 rounded-md">
+                  {recommendedStore.logo ? (
+                    <div className="relative w-5 h-5 overflow-hidden">
+                      <Image
+                        src={recommendedStore.logo || "/placeholder.svg"}
+                        alt={recommendedStore.name}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <Store className="h-5 w-5 text-primary" />
+                  )}
+                </div>
                 <span className="font-semibold text-[#BE185D]">
                   {recommendedStore.name}
                 </span>
@@ -231,11 +298,11 @@ export default function SharedListPage() {
                   produkter)
                 </span>
               </div>
-              <p className="font-semibold">
+              <p className="font-semibold mt-1">
                 Total pris: {formatPrice(recommendedStore.total)} kr
               </p>
               {!recommendedStore.hasAllProducts && (
-                <p className="text-yellow-600 text-sm flex items-center gap-1">
+                <p className="text-yellow-600 text-sm flex items-center gap-1 mt-1">
                   <AlertCircle className="h-4 w-4" />
                   <span>Noen produkter må kjøpes fra andre butikker</span>
                 </p>
@@ -253,7 +320,10 @@ export default function SharedListPage() {
         </div>
 
         <div className="flex justify-end mb-4">
-          <Button onClick={downloadShoppingList}>
+          <Button
+            onClick={downloadShoppingList}
+            className="bg-[#E91E63] hover:bg-[#D81B60]"
+          >
             <Download className="h-4 w-4 mr-2" />
             Last ned som tekstfil
           </Button>
@@ -265,6 +335,18 @@ export default function SharedListPage() {
             {itemsInRecommendedStore.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
+                  {recommendedStore?.logo ? (
+                    <div className="relative w-5 h-5 overflow-hidden">
+                      <Image
+                        src={recommendedStore.logo || "/placeholder.svg"}
+                        alt={recommendedStore.name}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <Store className="h-5 w-5 text-[#BE185D]" />
+                  )}
                   <h3 className="font-medium">
                     Handlekurv - {recommendedStoreName}
                   </h3>
@@ -296,7 +378,17 @@ export default function SharedListPage() {
                       </div>
                       <div className="flex flex-1 flex-col">
                         <h4 className="font-medium">{item.name}</h4>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          {bestStoreOption.logo && (
+                            <div className="relative w-4 h-4 overflow-hidden">
+                              <Image
+                                src={bestStoreOption.logo || "/placeholder.svg"}
+                                alt={bestStoreOption.name}
+                                fill
+                                className="object-contain"
+                              />
+                            </div>
+                          )}
                           <span>
                             {formatPrice(bestStoreOption.price)} kr{" "}
                             {item.quantity > 1 &&
@@ -349,9 +441,20 @@ export default function SharedListPage() {
                         <div className="flex flex-1 flex-col">
                           <h4 className="font-medium">{item.name}</h4>
                           <div className="space-y-1">
-                            <p className="text-sm text-[#BE185D]">
-                              Billigst hos {bestOption.name}:{" "}
-                              {formatPrice(bestOption.price)} kr{" "}
+                            <p className="text-sm text-[#BE185D] flex items-center gap-1">
+                              Billigst hos{" "}
+                              {bestOption.logo && (
+                                <span className="inline-block relative w-4 h-4">
+                                  <Image
+                                    src={bestOption.logo || "/placeholder.svg"}
+                                    alt={bestOption.name}
+                                    fill
+                                    className="object-contain"
+                                  />
+                                </span>
+                              )}
+                              {bestOption.name}: {formatPrice(bestOption.price)}{" "}
+                              kr{" "}
                               {item.quantity > 1 && (
                                 <span>
                                   (Totalt: {formatPrice(itemTotal)} kr)
@@ -363,8 +466,23 @@ export default function SharedListPage() {
                               {sortedOptions
                                 .slice(1, 4)
                                 .map((option, index) => (
-                                  <span key={option.name}>
-                                    {index === 0 ? " " : ", "}
+                                  <span
+                                    key={option.name}
+                                    className="flex items-center inline-flex gap-1 ml-1"
+                                  >
+                                    {index === 0 ? "" : ", "}
+                                    {option.logo && (
+                                      <span className="inline-block relative w-4 h-4">
+                                        <Image
+                                          src={
+                                            option.logo || "/placeholder.svg"
+                                          }
+                                          alt={option.name}
+                                          fill
+                                          className="object-contain"
+                                        />
+                                      </span>
+                                    )}
                                     {option.name} ({formatPrice(option.price)}{" "}
                                     kr)
                                   </span>
@@ -395,6 +513,21 @@ export default function SharedListPage() {
                     className="flex items-center justify-between text-sm mb-2"
                   >
                     <div className="flex items-center gap-2">
+                      {store.logo ? (
+                        <div className="relative w-6 h-6 overflow-hidden rounded">
+                          <Image
+                            src={store.logo || "/placeholder.svg"}
+                            alt={store.name}
+                            width={24}
+                            height={24}
+                            className="object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <div className="bg-primary/10 p-1 rounded-md">
+                          <Store className="h-4 w-4 text-primary" />
+                        </div>
+                      )}
                       <span
                         className={
                           store.name === recommendedStore?.name
