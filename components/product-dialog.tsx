@@ -66,7 +66,7 @@ export default function ProductDialog({
           <div className="grid gap-6 md:grid-cols-2 pb-6">
             <div className="space-y-6">
               <div className="relative bg-white rounded-lg overflow-hidden">
-                {/* Use different aspect ratios for different screen sizes */}
+               
                 <div className="aspect-[16/9] md:aspect-[4/3]">
                   {product.image ? (
                     <Image

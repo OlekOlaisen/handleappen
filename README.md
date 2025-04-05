@@ -1,16 +1,23 @@
 # Handleappen
 
 ## Project Description
-Handleappen is a hobby project written as a Progressive Web Application (PWA) designed to help users search for norwegian produts, plan their meals and find the best grocery prices across different stores in Norway. This hobby project aims to simplify meal planning and grocery shopping while helping users save money through price comparisons.
+Handleappen is a project written as a Progressive Web Application (PWA) designed to help users search for norwegian products, plan their meals and find the best grocery prices across different stores in Norway. This hobby project aims to simplify meal planning and grocery shopping while helping users save money through price comparisons.
 
 ## Features
 The application includes the following features:
 
 - **Product Search**: Search and compare prices across different grocery stores with the [Kassalapp](https://kassal.app/) API. 
-- **Shopping Cart**: Add products, meals and week plans to the cart and find the cheapest store
+- **Shopping Cart**: Add products, meals and week plans to the cart and find the cheapest stores
 - **Meal Planning**: Create and manage weekly meal plans
 - **Price Optimization**: Automatically finds the best store combination for your shopping list
+- **Store comparison**: Automatically finds the four cheapest stores based on price and availability
+- **Find Missing Products**: Automatically finds the product in the second best store if not available in the first cheapest store 
+- **Store availability counters**: Counters for how many products in the cart the store has
+- **Shopping Cart Sharing**: Share your shopping cart with another user
+- **Shopping Cart Download**: Download the shopping cart to your device and view it later
+- **Product details**: View product details such as price comparisons, description, nutrition and allergies
 - **PWA Support**: Install app through browser and use the app on any device
+- **Light/dark mode**: The user can choose between light mode, dark mode or system mode in the settings.
 - **User Authentication**: Secure login with email/password or Google authentication
 - **Responsive Design**: Fully responsive interface that works on all devices
 
